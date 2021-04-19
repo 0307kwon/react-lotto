@@ -1,94 +1,75 @@
-import React, { Component } from 'react';
-import { LotteryMachine, ProfitCalculator } from '../services';
-import LotteriesDetail from './LotteriesDetail';
-import PaymentForm from './PaymentForm';
-import WinningNumbersForm from './WinningNumbersForm';
-import WinningResultModal from './WinningResultModal';
+import React, { useState } from "react";
+import { LotteryMachine, ProfitCalculator } from "../services";
+import LotteriesDetail from "./LotteriesDetail";
+import PaymentForm from "./PaymentForm";
+import WinningNumbersForm from "./WinningNumbersForm";
+import WinningResultModal from "./WinningResultModal";
 
-class App extends Component {
-  constructor() {
-    super();
-    this.lotteryMachine = new LotteryMachine();
-    this.profitCalculator = new ProfitCalculator();
-    this.state = {
-      money: null,
-      lotteries: [],
-      winningResult: null,
-      isResultModalOpen: false,
-    };
-  }
+function App() {
+  const lotteryMachine = new LotteryMachine();
+  const profitCalculator = new ProfitCalculator();
+  const [money, setMoney] = useState(null);
+  const [lotteries, setLotteries] = useState([]);
+  const [winningResult, setWinningResult] = useState(null);
+  const [isResultModalOpen, setIsResultModalOpen] = useState(false);
 
-  setLotteries = () => {
-    const lotteries = this.lotteryMachine.publishLotteries(this.state.money);
-
-    this.setState({ lotteries });
+  const closeResultModal = () => {
+    setIsResultModalOpen(false);
   };
 
-  setMoney = money => {
-    this.setState({ money });
+  const resetApp = () => {
+    setMoney(null);
+    setLotteries([]);
+    setWinningResult(null);
+    setIsResultModalOpen(false);
   };
 
-  setWinningResult = (winningNumbers, bonusNumber) => {
-    const rankCount = this.profitCalculator.getRankCount({
-      winningNumbers,
-      bonusNumber,
-      lotteries: this.state.lotteries,
-    });
-    const earningRate = this.profitCalculator.getEarningRate(
-      rankCount,
-      this.state.lotteries
-    );
+  return (
+    <div id="app" className="d-flex justify-center mt-5">
+      <div className="w-100">
+        <h1 className="text-center">🎱 행운의 로또</h1>
+        <PaymentForm
+          money={money}
+          lotteries={lotteries}
+          setMoney={setMoney}
+          publishLotteries={money => {
+            const publishedLotteries = lotteryMachine.publishLotteries(money);
 
-    this.setState({
-      winningResult: { rankCount, earningRate },
-      isResultModalOpen: true,
-    });
-  };
+            setLotteries(publishedLotteries);
+          }}
+        />
+        {lotteries.length > 0 && (
+          <>
+            <LotteriesDetail lotteries={lotteries} />
+            <WinningNumbersForm
+              setWinningResult={(winningNumbers, bonusNumber) => {
+                const rankCount = profitCalculator.getRankCount({
+                  winningNumbers,
+                  bonusNumber,
+                  lotteries,
+                });
+                const earningRate = profitCalculator.getEarningRate(
+                  rankCount,
+                  lotteries
+                );
 
-  closeResultModal = () => {
-    this.setState({ isResultModalOpen: false });
-  };
-
-  resetApp = () => {
-    this.setState({
-      money: null,
-      lotteries: [],
-      winningResult: null,
-      isResultModalOpen: false,
-    });
-  };
-
-  render() {
-    const { money, lotteries, winningResult } = this.state;
-
-    return (
-      <div id="app" className="d-flex justify-center mt-5">
-        <div className="w-100">
-          <h1 className="text-center">🎱 행운의 로또</h1>
-          <PaymentForm
-            money={money}
-            lotteries={lotteries}
-            setMoney={this.setMoney}
-            setLotteries={this.setLotteries}
-          />
-          {lotteries.length > 0 && (
-            <>
-              <LotteriesDetail lotteries={lotteries} />
-              <WinningNumbersForm setWinningResult={this.setWinningResult} />
-            </>
-          )}
-          {winningResult && (
-            <WinningResultModal
-              winningResult={winningResult}
-              isModalOpen={this.state.isResultModalOpen}
-              closeModal={this.closeResultModal}
-              resetApp={this.resetApp}
+                setWinningResult({ rankCount, earningRate });
+                setIsResultModalOpen(true);
+              }}
             />
-          )}
-        </div>
+          </>
+        )}
+        {winningResult && (
+          <WinningResultModal
+            winningResult={winningResult}
+            isModalOpen={isResultModalOpen}
+            closeModal={closeResultModal}
+            resetApp={resetApp}
+          />
+        )}
       </div>
-    );
-  }
+    </div>
+  );
 }
 
 export default App;

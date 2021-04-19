@@ -1,4 +1,4 @@
-import { LOTTERY, PRIZE } from '../utils';
+import { LOTTERY, PRIZE } from "../utils";
 
 export default class ProfitCalculator {
   getRankCount({ winningNumbers, bonusNumber, lotteries }) {
